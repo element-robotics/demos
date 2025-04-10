@@ -24,18 +24,12 @@ import os
 
 def generate_launch_description():
     # robot_model = launch_ros.substitutions.FindPackageShare(package="leo_description").find("leo_description")
-    pkg_share = FindPackageShare("lunarsim_gz_worlds")
-    gz_models_path = PathJoinSubstitution([pkg_share, "models"])
-
-
-    use_sim_time = LaunchConfiguration("use_sim_time")
-    use_localization = LaunchConfiguration("use_localization")
-    log_level = LaunchConfiguration("log_level")
+    pkg_share = FindPackageShare("simulation")
     gz_verbosity = LaunchConfiguration("gz_verbosity")
     headless = LaunchConfiguration("headless")
     world = LaunchConfiguration('world')
 
-    world_path = PathJoinSubstitution([pkg_share, "world", world])
+    world_path = PathJoinSubstitution([pkg_share, "models", "lunarsim", "world", world])
 
     # gazebo have to be executed with shell=False, or test_launch won't terminate it
     #   see: https://github.com/ros2/launch/issues/545
@@ -64,18 +58,11 @@ def generate_launch_description():
     
     return launch.LaunchDescription(
         [
-            # SetEnvironmentVariable(
-            #     name="IGN_GAZEBO_RESOURCE_PATH",
-            #     value=gz_models_path,
-            # ),
-            # SetEnvironmentVariable(
-            #     name="IGN_GAZEBO_MODEL_PATH",
-            #     value=gz_models_path,
-            # ),
+
             DeclareLaunchArgument(
                 name="headless",
                 default_value="False",
-                description="Start GZ in hedless mode and don't start RViz (overrides use_rviz)",
+                description="Start GZ in headless mode and don't start RViz (overrides use_rviz)",
             ),
             DeclareLaunchArgument(
                 name="use_sim_time",

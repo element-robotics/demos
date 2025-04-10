@@ -19,7 +19,7 @@
 #   VCS_REF     - The git revision of the Space ROS source code (no default value).
 #   VERSION     - The version of Space ROS (default: "preview")
 
-FROM osrf/space-ros:latest
+FROM osrf/space-ros:humble-2024.10.0
 
 # Define arguments used in the metadata definition
 ARG VCS_REF
@@ -43,6 +43,8 @@ RUN mkdir ${SPACEROS_DIR}/src \
 ENV DEMO_DIR=${HOME_DIR}/demos_ws
 ENV GZ_VERSION=garden
 ENV GZ_PARTITION=spaceros
+ENV GZ_SIM_RESOURCE_PATH=/home/spaceros-user/demos_ws/src/simulation/models/lunarsim/models
+ENV ROS_DISTRO=humble
 
 # Disable prompting during package installation
 ARG DEBIAN_FRONTEND=noninteractive
@@ -87,20 +89,20 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   sudo apt-get update -y && sudo apt-get install -y python3-rosinstall-generator
 
-# Install Gazebo Garder
+# Install Gazebo Garden
 # Using Docker BuildKit cache mounts for /var/cache/apt and /var/lib/apt ensures that
 # the cache won't make it into the built image but will be maintained between steps.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   sudo wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg \
   && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null \
-  && sudo apt-get update -y && sudo apt-get install -y gz-garden
+  && sudo apt-get update -y && sudo apt-get install -y gz-garden && sudo apt-get install -y git-lfs && git lfs install
 
 # Generate repos file for demo dependencies, excluding packages from Space ROS core.
 COPY --chown=${USERNAME}:${USERNAME} demo-pkgs.txt /tmp/
 COPY --chown=${USERNAME}:${USERNAME} excluded-pkgs.txt /tmp/
 RUN rosinstall_generator \
-  --rosdistro ${ROSDISTRO} \
+  --rosdistro ${ROS_DISTRO} \
   --deps \
   --exclude-path ${SPACEROS_DIR}/src \
   --exclude $(cat /tmp/excluded-pkgs.txt) -- \
@@ -116,7 +118,7 @@ RUN vcs import src < /tmp/demo_generated_pkgs.repos
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   /bin/bash -c 'source ${SPACEROS_DIR}/install/setup.bash' \
-  && rosdep install --from-paths ../spaceros/src src --ignore-src --rosdistro ${ROSDISTRO} -r -y --skip-keys "console_bridge generate_parameter_library fastcdr fastrtps rti-connext-dds-5.3.1 urdfdom_headers rmw_connextdds ros_testing rmw_connextdds rmw_fastrtps_cpp rmw_fastrtps_dynamic_cpp composition demo_nodes_py lifecycle rosidl_typesupport_fastrtps_cpp rosidl_typesupport_fastrtps_c ikos diagnostic_aggregator diagnostic_updater joy qt_gui rqt_gui rqt_gui_py"
+  && rosdep install --from-paths ${SPACEROS_DIR}/src src --ignore-src --rosdistro ${ROS_DISTRO} -r -y --skip-keys "console_bridge generate_parameter_library fastcdr fastrtps rti-connext-dds-5.3.1 urdfdom_headers rmw_connextdds ros_testing rmw_connextdds rmw_fastrtps_cpp rmw_fastrtps_dynamic_cpp composition demo_nodes_py lifecycle rosidl_typesupport_fastrtps_cpp rosidl_typesupport_fastrtps_c ikos diagnostic_aggregator diagnostic_updater joy qt_gui rqt_gui rqt_gui_py"
 
 
 # # Install libmongoc for development
@@ -141,7 +143,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   sudo apt-get update -y \
 && /bin/bash -c 'source "${SPACEROS_DIR}/install/setup.bash"' \
-&& rosdep install --from-paths src --ignore-src -r -y --rosdistro ${ROSDISTRO}
+&& rosdep install --from-paths src --ignore-src -r -y --rosdistro ${ROS_DISTRO}
 
 # Copy the demo source code
 COPY --chown=${USERNAME}:${USERNAME} lunar_sun_gz_plugin src/lunar_sun_gz_plugin
