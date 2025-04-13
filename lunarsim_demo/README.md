@@ -1,6 +1,6 @@
 # LunarSim Demo
 [![Licence](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)\
-<img src="./LunarSim.png" alt="Alt text" width="692" height="422">
+<img src="./LunarSim.jpg" alt="Alt text" width="692" height="422">
 
 This folder containts three ROS2 packages for to enable simulation in a lunar environment, including a lunar gazebo world using a Digital Elevation Model (DEM) and a plugin for a dynamic sun model based on Ephemeris data.
 
